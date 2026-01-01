@@ -1,6 +1,7 @@
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { spawnSync, spawn } from "node:child_process";
 import { ConfigSchema, ToolsConfigSchema, SettingsSchema, DEFAULT_TOOLS, DEFAULT_SETTINGS, getDefaultProjects, type Project, type Tool, type Settings } from "./types";
 import * as p from "@clack/prompts";
 
@@ -83,4 +84,45 @@ export function loadSettings(): Settings {
 
 export function saveSettings(settings: Settings) {
     writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+}
+
+// Check if a command exists in PATH
+export function commandExists(command: string): boolean {
+    try {
+        const result = spawnSync("where", [command], {
+            stdio: "pipe",
+            shell: true,
+        });
+        return result.status === 0;
+    } catch {
+        return false;
+    }
+}
+
+// Check if gsudo is needed and available
+export function checkGsudo(): { needed: boolean; available: boolean } {
+    const tools = loadTools();
+    const needsAdmin = tools.some((t) => t.enabled && t.requiresAdmin);
+    if (!needsAdmin) {
+        return { needed: false, available: false };
+    }
+    return { needed: true, available: commandExists("gsudo") };
+}
+
+// Install gsudo via winget
+export async function installGsudo(): Promise<boolean> {
+    return new Promise((resolve) => {
+        const child = spawn("winget", ["install", "gerardog.gsudo", "--accept-source-agreements", "--accept-package-agreements"], {
+            stdio: "inherit",
+            shell: true,
+        });
+
+        child.on("close", (code) => {
+            resolve(code === 0);
+        });
+
+        child.on("error", () => {
+            resolve(false);
+        });
+    });
 }

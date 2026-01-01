@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { loadProjects, loadSettings, saveSettings } from "./config";
+import { loadProjects, loadSettings, saveSettings, checkGsudo, installGsudo } from "./config";
 import { launchFlow, quickLaunch } from "./flows/launch";
 import { toolsFlow } from "./flows/tools";
 import { addFlow } from "./flows/add";
@@ -101,6 +101,39 @@ ${pc.yellow("Options:")}
 `);
 }
 
+// Check for gsudo and offer to install if missing
+async function checkAndInstallGsudo(): Promise<void> {
+  const { needed, available } = checkGsudo();
+
+  if (!needed || available) {
+    return;
+  }
+
+  p.log.warn(pc.yellow("⚠️  gsudo is not installed but is required for some tools (Claude Code, Gemini CLI)"));
+
+  const shouldInstall = await p.confirm({
+    message: "Would you like to install gsudo via winget?",
+    initialValue: true,
+  });
+
+  if (p.isCancel(shouldInstall) || !shouldInstall) {
+    p.log.info(pc.dim("You can install it later with: winget install gerardog.gsudo"));
+    p.log.info(pc.dim("Or disable admin requirement for tools in Tools & Updates menu"));
+    return;
+  }
+
+  p.log.info("Installing gsudo...");
+  const success = await installGsudo();
+
+  if (success) {
+    p.log.success("gsudo installed successfully!");
+    p.log.info(pc.dim("You may need to restart your terminal for gsudo to be available"));
+  } else {
+    p.log.error("Failed to install gsudo");
+    p.log.info(pc.dim("Try manually: winget install gerardog.gsudo"));
+  }
+}
+
 async function main() {
   // Parse CLI arguments
   const args = process.argv.slice(2);
@@ -117,6 +150,9 @@ async function main() {
     const projectQuery = args[0];
     const toolId = args[1] || loadSettings().defaultTool;
 
+    // Check for gsudo before quick launch
+    await checkAndInstallGsudo();
+
     await quickLaunch(projects, projectQuery, toolId);
     process.exit(0);
   }
@@ -124,6 +160,9 @@ async function main() {
   // Interactive mode
   process.stdout.write("\x1Bc"); // Clear screen
   p.intro(`${pc.bgCyan(pc.black(" PROJECT MANAGER "))} 🚀`);
+
+  // Check for gsudo on first run
+  await checkAndInstallGsudo();
 
   while (true) {
     const projects = loadProjects(); // Reload to get fresh state
