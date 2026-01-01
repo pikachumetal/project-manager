@@ -1,6 +1,6 @@
 {
   "name": "@pikachu-metal/project-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive CLI tool for managing and launching development projects",
   "author": "Àngel Delgado Fernández",
   "license": "MIT",
