@@ -20,20 +20,23 @@ async function findProjectFile(workspacePath: string, patterns: string[]): Promi
 
 /**
  * Spawn a detached process that continues after parent exits
+ * Uses 'start' command on Windows for reliable detachment
  */
 function spawnDetached(command: string, args: string[], cwd: string): void {
-    // On Windows, use shell only for the command without args to avoid deprecation warning
-    const child = spawn(command, args, {
+    // Use 'start' to launch detached processes on Windows
+    // 'start ""' uses empty title, /B runs without new window for console apps
+    const startArgs = ["", command, ...args];
+    const child = spawn("start", startArgs, {
         cwd,
-        detached: true,
         stdio: "ignore",
-        windowsHide: true,
+        shell: true,
     });
     child.unref();
 }
 
-export async function launchTool(tool: Tool, workspacePath: string) {
-    p.log.info(pc.cyan(`Launching ${tool.name}...`));
+export async function launchTool(tool: Tool, workspacePath: string, runAsAdmin = false) {
+    const adminLabel = runAsAdmin ? pc.yellow(" (Admin)") : "";
+    p.log.info(pc.cyan(`Launching ${tool.name}${adminLabel}...`));
 
     try {
         // Check if we should open a project file instead of the folder
@@ -48,7 +51,7 @@ export async function launchTool(tool: Tool, workspacePath: string) {
 
         if (tool.launchInTerminal) {
             // Tools that need to run inside a terminal (Claude, Gemini, etc.)
-            if (tool.requiresAdmin) {
+            if (runAsAdmin && tool.supportsAdmin) {
                 // Use gsudo for admin elevation
                 spawnDetached("gsudo", ["wt", "-d", workspacePath, "pwsh", "-NoExit", "-Command", tool.executable], workspacePath);
             } else {

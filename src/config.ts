@@ -99,11 +99,11 @@ export function commandExists(command: string): boolean {
     }
 }
 
-// Check if gsudo is needed and available
+// Check if gsudo might be needed (tools that support admin) and if it's available
 export function checkGsudo(): { needed: boolean; available: boolean } {
     const tools = loadTools();
-    const needsAdmin = tools.some((t) => t.enabled && t.requiresAdmin);
-    if (!needsAdmin) {
+    const hasAdminTools = tools.some((t) => t.enabled && t.supportsAdmin);
+    if (!hasAdminTools) {
         return { needed: false, available: false };
     }
     return { needed: true, available: commandExists("gsudo") };
