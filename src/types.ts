@@ -52,7 +52,7 @@ export const ToolSchema = z.object({
   updateCommand: z.string().optional(),
   enabled: z.boolean().default(true),
   launchInTerminal: z.boolean().default(false),
-  requiresAdmin: z.boolean().default(false),
+  supportsAdmin: z.boolean().default(false),
   launchArgs: z.string().optional(),
   // Patterns to find project files (e.g., ["*.code-workspace"], ["*.sln", "*.slnx"])
   projectFilePatterns: z.array(z.string()).optional(),
@@ -73,7 +73,7 @@ export const DEFAULT_TOOLS: Tool[] = [
     updateCommand: "claude update",
     enabled: true,
     launchInTerminal: true,
-    requiresAdmin: true,
+    supportsAdmin: true,
   },
   {
     id: "gemini",
@@ -83,7 +83,7 @@ export const DEFAULT_TOOLS: Tool[] = [
     updateCommand: "bun update --global @google/gemini-cli",
     enabled: true,
     launchInTerminal: true,
-    requiresAdmin: true,
+    supportsAdmin: true,
   },
   // Editors & IDEs
   {

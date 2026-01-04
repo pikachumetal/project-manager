@@ -162,12 +162,28 @@ export async function launchFlow(projects: Project[]) {
 
     if (p.isCancel(selectedTools)) return;
 
+    const toolsArray = selectedTools as Tool[];
+
+    // Check if any selected tool supports admin
+    let runAsAdmin = false;
+    const hasAdminTools = toolsArray.some((t) => t.supportsAdmin);
+
+    if (hasAdminTools) {
+        const adminChoice = await p.confirm({
+            message: "Run with administrator privileges?",
+            initialValue: false,
+        });
+
+        if (p.isCancel(adminChoice)) return;
+        runAsAdmin = adminChoice;
+    }
+
     // Track as recent
     addRecent(selectedProject.name);
 
     // Launch all selected tools
-    for (const tool of selectedTools as Tool[]) {
-        await launchTool(tool, workspacePath);
+    for (const tool of toolsArray) {
+        await launchTool(tool, workspacePath, runAsAdmin);
     }
 }
 
