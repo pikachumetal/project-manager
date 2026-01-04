@@ -109,7 +109,7 @@ async function checkAndInstallGsudo(): Promise<void> {
     return;
   }
 
-  p.log.warn(pc.yellow("⚠️  gsudo is not installed but is required for some tools (Claude Code, Gemini CLI)"));
+  p.log.warn(pc.yellow("⚠️  gsudo is not installed. It's needed to run tools with admin privileges."));
 
   const shouldInstall = await p.confirm({
     message: "Would you like to install gsudo via winget?",
