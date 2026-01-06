@@ -36,7 +36,7 @@ Tools are external applications that can open projects. Defined in `types.ts`:
 ### Projects
 Projects have a name, path, and optional workspaces (subfolders).
 
-### Config Files (stored alongside the executable)
+### Config Files (stored in `~/.project-manager/`)
 - `projects.json` - User's configured projects
 - `tools.json` - Tool configuration (overrides defaults)
 - `recents.json` - Last 10 opened projects
