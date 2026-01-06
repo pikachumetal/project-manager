@@ -1,18 +1,23 @@
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { spawnSync, spawn } from "node:child_process";
 import { ConfigSchema, ToolsConfigSchema, SettingsSchema, DEFAULT_TOOLS, DEFAULT_SETTINGS, getDefaultProjects, type Project, type Tool, type Settings } from "./types";
 import * as p from "@clack/prompts";
 
-// Get directory path (compatible with both Node.js and Bun)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Config directory in user's home folder
+const CONFIG_DIR = join(homedir(), ".project-manager");
+const CONFIG_PATH = join(CONFIG_DIR, "projects.json");
+const TOOLS_PATH = join(CONFIG_DIR, "tools.json");
+const RECENTS_PATH = join(CONFIG_DIR, "recents.json");
+const SETTINGS_PATH = join(CONFIG_DIR, "settings.json");
 
-const CONFIG_PATH = join(__dirname, "..", "projects.json");
-const TOOLS_PATH = join(__dirname, "..", "tools.json");
-const RECENTS_PATH = join(__dirname, "..", "recents.json");
-const SETTINGS_PATH = join(__dirname, "..", "settings.json");
+// Ensure config directory exists
+function ensureConfigDir() {
+    if (!existsSync(CONFIG_DIR)) {
+        mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+}
 
 export function loadProjects(): Project[] {
     if (!existsSync(CONFIG_PATH)) {
@@ -41,6 +46,7 @@ export function loadRecents(): string[] {
 }
 
 export function addRecent(projectName: string) {
+    ensureConfigDir();
     const recents = loadRecents().filter((r) => r !== projectName);
     recents.unshift(projectName); // Add to front
     const trimmed = recents.slice(0, 10); // Keep max 10
@@ -48,6 +54,7 @@ export function addRecent(projectName: string) {
 }
 
 export function saveProjects(projects: Project[]) {
+    ensureConfigDir();
     writeFileSync(CONFIG_PATH, JSON.stringify(projects, null, 2));
 }
 
@@ -66,6 +73,7 @@ export function loadTools(): Tool[] {
 }
 
 export function saveTools(tools: Tool[]) {
+    ensureConfigDir();
     writeFileSync(TOOLS_PATH, JSON.stringify(tools, null, 2));
 }
 
@@ -83,6 +91,7 @@ export function loadSettings(): Settings {
 }
 
 export function saveSettings(settings: Settings) {
+    ensureConfigDir();
     writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
 }
 
